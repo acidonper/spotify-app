@@ -52,6 +52,7 @@ app.use(bodyParser.json());
 
 app.use("/", require("./routes/app"));
 app.use("/security", require("./routes/security"));
+app.use("/spotify", require("./routes/spotify"));
 
 app.use((req, res) => res.status(404).json({ message: "route not found" }));
 

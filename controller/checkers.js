@@ -1,10 +1,16 @@
 const zxcvbn = require("zxcvbn");
 
-const userItems = ["name", "lastname", "username", "email", "password"];
+const userItems = [
+    "name",
+    "lastname",
+    "username",
+    "email",
+    "password",
+    "agree"
+];
 
 const checkHttpLoginParams = params => {
     const keys = Object.keys(params);
-    console.log(params);
     // Check email and password
     if (
         keys.length !== 2 ||
@@ -17,8 +23,11 @@ const checkHttpLoginParams = params => {
 const checkHttpParams = params => {
     const itemsExcluded = [];
     const itemsIncluded = [];
-    const { password } = params;
+    const { password, agree } = params;
     const keys = Object.keys(params);
+
+    if (!agree || agree !== "on") throw `Agreement required`;
+
     // Check valid and required params
     keys.map(item => {
         if (!userItems.includes(item)) {

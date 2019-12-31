@@ -1,20 +1,12 @@
 const Express = require("express");
 const router = Express.Router();
 
-router.get("/", async (req, res) => {
-    res.render("welcome");
-});
+router.use("/", require("./root"));
 
-router.get("/login", async (req, res) => {
-    res.render("login");
-});
+router.use("/login", require("./login"));
 
-router.get("/signup", async (req, res) => {
-    res.render("signup");
-});
+router.use("/signup", require("./signup"));
 
 router.use("/home", require("./home"));
-
-router.use("/admin", require("./admin"));
 
 module.exports = router;

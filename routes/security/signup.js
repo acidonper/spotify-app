@@ -4,6 +4,7 @@ const checkers = require("../../controller/checkers");
 const mongoUser = require("../../controller/mongoUser");
 
 router.post("/", async (req, res) => {
+    const data = { message: "", code: "", navbar: true };
     try {
         checkers.checkHttpParams(req.body);
         const { email } = req.body;
@@ -15,23 +16,23 @@ router.post("/", async (req, res) => {
                 .then(() => res.redirect("/login"))
                 .catch(err => {
                     if (err.name === "ValidationError") {
-                        error_data.code = 422;
-                        error_data.message = err.message;
-                        res.render("error", error_data);
+                        data.code = 422;
+                        data.message = err.message;
+                        res.render("error", data);
                     } else {
-                        error_data.code = 500;
-                        error_data.message = err.message;
-                        res.render("error", error_data);
+                        data.code = 500;
+                        data.message = err.message;
+                        res.render("error", data);
                     }
                 });
+            data.code = 500;
+            data.message = error;
+            res.render("error", data);
         }
-        error_data.code = 409;
-        error_data.message = `User ${email} exists`;
-        res.render("error", error_data);
     } catch (error) {
-        error_data.code = 422;
-        error_data.message = error;
-        res.render("error", error_data);
+        data.code = 422;
+        data.message = error;
+        res.render("error", data);
     }
 });
 
