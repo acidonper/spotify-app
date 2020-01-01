@@ -18,30 +18,35 @@
 <!-- Page Content -->
 <section class="py-5">
 <div class="container">
+    {{#if spotify_album}}
+        <div class="alert alert-primary" role="alert" align="center"><strong>{{spotify_album}}</strong></div>
+    {{/if}}
     {{#if spotify}}
-    <div class="card-columns">
         {{#each spotify}}
+        <br>
         <div class="card">
-            <img class="card-img-top" src="{{images.0.url}}" alt="Card image cap">
+            <h5 class="card-header">{{name}}</h5>
             <div class="card-body">
-                <h5 class="card-title"><strong>{{name}}</strong></h5>
+                <h5 class="card-title">Artists:</h5>
                 {{#each artists}}
-                <p class="card-text">{{name}}</p>
+                <span class="badge badge-pill badge-info">{{name}}</span>
                 {{/each}}
-                <p class="card-text"><small class="text-muted">Launched {{release_date}}</small></p>
-                <form action="/album" method="GET">
-                    <input type="hidden" name="id" value="{{id}}">
-                    <input type="hidden" name="album" value="{{name}}">
-                    <button type="submit" class="btn btn-info">Info</button>
-                </form>
+                <br><br>
+                <figure>
+                    <audio
+                        controls
+                        src="{{preview_url}}">
+                            Your browser does not support the
+                            <code>audio</code> element.
+                    </audio>
+                </figure>
+                <br><span class="badge badge-primary">{{track_number}}</span>
             </div>
         </div>
         {{/each}}
-    </div>
     {{else}}
-    <h2 class="font-weight-light" align="center" >Playlist Management System</h2> 
-    <h4 align="center">@Powered by Asier Cidon</h4>
+    <h2 class="font-weight-light">Playlist Management System</h2> 
+    <h4>@Powered by Asier Cidon</h4>
     {{/if}}
 </div>
 </section>
-

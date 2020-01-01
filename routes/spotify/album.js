@@ -8,7 +8,8 @@ const spotify_api = process.env.SPOTIFY_API;
 let spotify_token = process.env.SPOTIFY_TOKEN;
 
 router.get("/", async (req, res) => {
-    const url = `${spotify_api}browse/new-releases?country=ES`;
+    const { id } = req.query;
+    const url = `${spotify_api}albums/${id}/tracks`;
     try {
         if (!spotify_token) {
             spotify_token = await getSpotifyToken();

@@ -9,4 +9,6 @@ router.use("/signup", require("./signup"));
 
 router.use("/home", require("./home"));
 
+router.use("/album", require("./album"));
+
 module.exports = router;
