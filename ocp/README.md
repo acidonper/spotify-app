@@ -7,8 +7,8 @@ This procedure tries to give an overview of the procedure involved in deploy Spo
 -   An OCP Cluster (Tested in OpenShift 4.2)
 -   An OpenShift Project
 -   An user with developer rights in previous OpenShift project
--   openshift-clients
--   bash console
+-   openshift-client installed
+-   bash console installed
 
 ## Overview
 
@@ -22,6 +22,8 @@ Basically, the procedure included in this document tries to perform the followin
 -   Create a route in order to allow access to previous service
 -   Create a deployment config object charged with the container creation and inject environment variables
 -   Start deployment process
+
+**IMPORTANT: It is required to replace SPOTIFY_ID, SPOTIFY_SECRET and PROJECT_NAME variables with current values in oc-deploy-manually-app-dev.sh file**
 
 ## Procedure
 
