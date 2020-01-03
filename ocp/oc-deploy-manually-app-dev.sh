@@ -16,11 +16,11 @@ SPOTIFY_ID=123123
 SPOTIFY_SECRET=123123
 SPOTIFY_API="https://api.spotify.com/v1/"
 
-# Create image stream in OCP which will be used to build nodejs project (based on NODDEJS official image stream)
+# Create an image stream in OCP which will be used to build nodejs project (based on NODDEJS official image stream)
 oc process -f ocpobjects/image-stream.yaml -n $PROJECT_NAME \
 -p SERVICE_NAME=$SERVICE_NAME | oc create -f - -n $PROJECT_NAME
 
-# Create build config object in order to create a new image based on our image stream with GITHUB repository content (Project nodejs)
+# Create a build config object in order to create a new image based on our image stream with GITHUB repository content (Project nodejs)
 oc process -f ocpobjects/build.yaml -n $PROJECT_NAME \
 -p SERVICE_NAME=$SERVICE_NAME \
 -p SERVICE_GIT_URL=$SERVICE_GIT_URL | oc create -f - -n $PROJECT_NAME
