@@ -12,8 +12,8 @@ MONGO_PORT=27017
 MONGO_HOST="$MONGODB_USER:$MONGODB_PASSWORD@$MONGODB_SERVICE"
 MONGO_DB="$MONGODB_DATABASE"
 ENVIRONMENT=dev
-SPOTIFY_ID=*********
-SPOTIFY_SECRET=******
+SPOTIFY_ID=fd3f0961ab664d788d7b14e381a01788
+SPOTIFY_SECRET=1837c93d8d064720aefc40e1c522d4fd
 SPOTIFY_API="https://api.spotify.com/v1/"
 
 # Create image stream in OCP which will be used to build nodejs project (based on NODDEJS official image stream)

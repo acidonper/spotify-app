@@ -1,3 +1,4 @@
 node_modules
 package-lock.json
 .env
+jenkins/oc-deploy-manually-app-dev.sh
