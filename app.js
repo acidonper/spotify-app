@@ -4,8 +4,6 @@ const Express = require("express");
 const app = Express();
 const bodyParser = require("body-parser");
 const SERVER_PORT = process.env.SERVER_PORT || 5000;
-const SPOTIFY_ID = process.env.SPOTIFY_ID;
-const SPOTIFY_SECRET = process.env.SPOTIFY_SECRET;
 
 const mongoose = require("mongoose");
 const DB_PORT = process.env.MONGO_PORT;
