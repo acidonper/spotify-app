@@ -11,4 +11,6 @@ router.use("/home", require("./home"));
 
 router.use("/album", require("./album"));
 
+router.use("/health", require("./health"));
+
 module.exports = router;
