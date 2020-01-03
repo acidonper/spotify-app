@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Template
+metadata:
+    annotations:
+        description: ${SERVICE_NAME} build config template
+    name: ${SERVICE_NAME}-build-config-template
+objects:
+    - apiVersion: v1
+      kind: BuildConfig
+      metadata:
+          name: ${SERVICE_NAME}
+      spec:
+          output:
+              to:
+                  kind: ImageStreamTag
+                  name: ${SERVICE_NAME}:latest
+          source:
+              contextDir: /
+              git:
+                  ref: master
+                  uri: ${SERVICE_GIT_URL}
+              type: Git
+          strategy:
+              sourceStrategy:
+                  env:
+                      - name: GIT_SSL_NO_VERIFY
+                        value: "true"
+                      - name: NODE_TLS_REJECT_UNAUTHORIZED
+                        value: "0"
+                  from:
+                      kind: ImageStreamTag
+                      name: nodejs:latest
+                      namespace: openshift
+              type: Source
+parameters:
+    - description: Name of the service to be deployed
+      displayName: Service Name
+      name: SERVICE_NAME
+    - description: Git repository where service is stored
+      displayName: GIT Service URL
+      name: SERVICE_GIT_URL
