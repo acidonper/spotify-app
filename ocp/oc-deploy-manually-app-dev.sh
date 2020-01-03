@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_NAME=cicd
+PROJECT_NAME=test01
 SERVICE_NAME=spotify-nodejs
 SERVICE_GIT_URL="https://github.com/acidonper/spotify-app-exercice.git"
 MONGODB_SERVICE=mongodb
@@ -12,8 +12,8 @@ MONGO_PORT=27017
 MONGO_HOST="$MONGODB_USER:$MONGODB_PASSWORD@$MONGODB_SERVICE"
 MONGO_DB="$MONGODB_DATABASE"
 ENVIRONMENT=dev
-SPOTIFY_ID=adsdsa
-SPOTIFY_SECRET=adsasd
+SPOTIFY_ID=123123
+SPOTIFY_SECRET=123123
 SPOTIFY_API="https://api.spotify.com/v1/"
 
 # Create image stream in OCP which will be used to build nodejs project (based on NODDEJS official image stream)
@@ -37,15 +37,15 @@ oc process -f ocpobjects/mongodb.yaml -n $PROJECT_NAME \
 -p MONGODB_ADMIN_PASSWORD=$MONGODB_ADMIN_PASSWORD | oc create -f - -n $PROJECT_NAME
 
 # Create a service in order to allow access to nodejs container
-oc process -f ocpobjects/$ENVIRONMENT/service.yaml -n $PROJECT_NAME \
+oc process -f ocpobjects/service.yaml -n $PROJECT_NAME \
 -p SERVICE_NAME=$SERVICE_NAME | oc create -f - -n $PROJECT_NAME
 
 # Create a route in order to allow access to previous service
-oc process -f ocpobjects/$ENVIRONMENT/route.yaml -n $PROJECT_NAME \
+oc process -f ocpobjects/route.yaml -n $PROJECT_NAME \
 -p SERVICE_NAME=$SERVICE_NAME | oc create -f - -n $PROJECT_NAME
 
 # Create a deployment config object charged with the container creation and inject environment variables 
-oc process -f ocpobjects/$ENVIRONMENT/deployment.yaml -n $PROJECT_NAME  \
+oc process -f ocpobjects/deployment.yaml -n $PROJECT_NAME  \
 -p MONGO_PORT=$MONGO_PORT \
 -p MONGO_HOST=$MONGO_HOST \
 -p MONGO_DB=$MONGO_DB \
@@ -55,6 +55,9 @@ oc process -f ocpobjects/$ENVIRONMENT/deployment.yaml -n $PROJECT_NAME  \
 -p SERVICE_NAME=$SERVICE_NAME  \
 -p PROJECT_NAME=$PROJECT_NAME  \
 -p ENVIRONMENT=$ENVIRONMENT | oc create -f - -n $PROJECT_NAME
+
+# Wait for previous process
+sleep 60
 
 # Start deployment process
 oc rollout latest $SERVICE_NAME -n $PROJECT_NAME
