@@ -1,90 +1,110 @@
 apiVersion: v1
 kind: Template
 metadata:
-  annotations:
-    description: ${SERVICE_NAME} build config template
-  name: ${SERVICE_NAME}-build-config-template
+    annotations:
+        description: ${SERVICE_NAME} build config template
+    name: ${SERVICE_NAME}-build-config-template
 objects:
-  - apiVersion: v1
-    kind: DeploymentConfig
-    metadata:
-      name: ${SERVICE_NAME}
-    spec:
-      replicas: 1
-      selector:
-        deploymentconfig: ${SERVICE_NAME}
-      strategy:
-        resources: {}
-        rollingParams:
-          intervalSeconds: 1
-          maxSurge: 25%
-          maxUnavailable: 25%
-          timeoutSeconds: 600
-          updatePeriodSeconds: 1
-        type: Rolling
-      template:
-        metadata:
-          creationTimestamp: null
-          labels:
-            deploymentconfig: ${SERVICE_NAME}
-        spec:
-          volumes:
-          - name: config-volume
-            configMap:
-              name: ${SERVICE_NAME}-${ENVIRONMENT}-config
-          containers:
-          - name: ${SERVICE_NAME}
-            image: image-registry.openshift-image-registry.svc:5000/${PROJECT_NAME}/${SERVICE_NAME}
-            imagePullPolicy: Always
-            livenessProbe:
-              tcpSocket:
-                port: 5000
-              initialDelaySeconds: 15
-              timeoutSeconds: 1
-              periodSeconds: 10
-              successThreshold: 1
-              failureThreshold: 3
-            readinessProbe:
-              httpGet:
-                path: /
-                port: 5000
-                scheme: HTTP
-              initialDelaySeconds: 15
-              timeoutSeconds: 10
-              periodSeconds: 30
-              successThreshold: 1
-              failureThreshold: 1
-            name: ${SERVICE_NAME}
-            volumeMounts:
-            - name: config-volume
-              mountPath: /opt/app-root/src/.env
-            ports:
-            - containerPort: 5000
-              protocol: TCP
-            env:
-            - name: ENVIRONMENT_NAME
-              value: dev
-            resources:
-              limits:
-                memory: 1Gi
-            securityContext:
-              capabilities: {}
-              privileged: false
-            terminationMessagePath: /dev/termination-log
-          dnsPolicy: ClusterFirst
-          restartPolicy: Always
-          securityContext: {}
-          terminationGracePeriodSeconds: 30
-      triggers:
-      - type: ConfigChange
-    status: {}
+    - apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+          name: ${SERVICE_NAME}
+      spec:
+          replicas: 1
+          selector:
+              deploymentconfig: ${SERVICE_NAME}
+          strategy:
+              resources: {}
+              rollingParams:
+                  intervalSeconds: 1
+                  maxSurge: 25%
+                  maxUnavailable: 25%
+                  timeoutSeconds: 600
+                  updatePeriodSeconds: 1
+              type: Rolling
+          template:
+              metadata:
+                  creationTimestamp: null
+                  labels:
+                      deploymentconfig: ${SERVICE_NAME}
+              spec:
+                  containers:
+                      - name: ${SERVICE_NAME}
+                        image: image-registry.openshift-image-registry.svc:5000/${PROJECT_NAME}/${SERVICE_NAME}
+                        imagePullPolicy: Always
+                        livenessProbe:
+                            tcpSocket:
+                                port: 5000
+                            initialDelaySeconds: 15
+                            timeoutSeconds: 1
+                            periodSeconds: 10
+                            successThreshold: 1
+                            failureThreshold: 3
+                        readinessProbe:
+                            httpGet:
+                                path: /health
+                                port: 5000
+                                scheme: HTTP
+                            initialDelaySeconds: 15
+                            timeoutSeconds: 10
+                            periodSeconds: 30
+                            successThreshold: 1
+                            failureThreshold: 1
+                        ports:
+                            - containerPort: 5000
+                              protocol: TCP
+                        env:
+                            - name: MONGO_PORT
+                              value: ${MONGO_PORT}
+                            - name: MONGO_HOST
+                              value: ${MONGO_HOST}
+                            - name: MONGO_DB
+                              value: ${MONGO_DB}
+                            - name: SPOTIFY_ID
+                              value: ${SPOTIFY_ID}
+                            - name: SPOTIFY_SECRET
+                              value: ${SPOTIFY_SECRET}
+                            - name: SPOTIFY_API
+                              value: ${SPOTIFY_API}
+                        resources:
+                            limits:
+                                memory: 1Gi
+                        securityContext:
+                            capabilities: {}
+                            privileged: false
+                        terminationMessagePath: /dev/termination-log
+                  dnsPolicy: ClusterFirst
+                  restartPolicy: Always
+                  securityContext: {}
+                  terminationGracePeriodSeconds: 30
+          triggers:
+              - type: ConfigChange
+      status: {}
 parameters:
-- description: Name of the service
-  displayName: Service Name
-  name: SERVICE_NAME
-- description: Name of project
-  displayName: Project Name
-  name: PROJECT_NAME
-- description: Target environment
-  displayName: Environment
-  name: ENVIRONMENT
+    - description: Name of the service
+      displayName: Service Name
+      name: SERVICE_NAME
+    - description: Name of project
+      displayName: Project Name
+      name: PROJECT_NAME
+    - description: Target environment
+      displayName: Environment
+      name: ENVIRONMENT
+    - description: Target MONGO_PORT
+      displayName: MONGO_PORT
+      name: MONGO_PORT
+    - description: Target MONGO_HOST
+      displayName: MONGO_HOST
+      name: MONGO_HOST
+    - description: Target MONGO_DB
+      displayName: MONGO_DB
+      name: MONGO_DB
+    - description: Target SPOTIFY_ID
+      displayName: SPOTIFY_ID
+      name: SPOTIFY_ID
+    - description: Target SPOTIFY_SECRET
+      displayName: SPOTIFY_SECRET
+      name: SPOTIFY_SECRET
+    - description: Target SPOTIFY_API
+      displayName: SPOTIFY_API
+      name: SPOTIFY_API
