@@ -1,0 +1,123 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+    name: pipelines
+objects:
+    - apiVersion: build.openshift.io/v1
+      kind: BuildConfig
+      metadata:
+          annotations:
+          labels:
+              build: ${APP_NAME}-${GIT_BRANCH}
+              app: ${APP_NAME}
+          name: ${APP_NAME}-${GIT_BRANCH}
+      spec:
+          runPolicy: Serial
+          source:
+              git:
+                  ref: ${GIT_BRANCH}
+                  uri: ${GIT_URL}
+              secrets:
+                  - destinationDir: .
+                    secret:
+                        name: ${GIT_SECRET}
+              sourceSecret:
+                  name: ${GIT_SECRET}
+              type: Git
+          strategy:
+              jenkinsPipelineStrategy:
+                  env:
+                      - name: APP_NAME
+                        value: ${APP_NAME}
+                      - name: GIT_BRANCH
+                        value: ${GIT_BRANCH}
+                      - name: GIT_CREDENTIALS
+                        value: ${JENKINS_GIT_SECRET}
+                      - name: GIT_URL
+                        value: ${GIT_URL}
+                      - name: BUILD_PROJECT
+                        value: ${BUILD_PROJECT}
+                      - name: BASE_IMAGE
+                        value: ${BASE_IMAGE}
+                      - name: BUILD_TAG
+                        value: ${BUILD_TAG}
+                      - name: DEPLOY_TAG
+                        value: ${DEPLOY_TAG}
+                      - name: PROD_PROJECT
+                        value: ${PROD_PROJECT}
+                      - name: SA
+                        value: ${SA}
+                      - name: TEST_STRATEGY
+                        value: ${TEST_STRATEGY}
+                  jenkinsfilePath: Jenkinsfile
+              type: JenkinsPipeline
+          triggers:
+              - type: GitHub
+                github:
+                    secret: "${WEBHOOK_SECRET}"
+              - type: GitLab
+                gitlab:
+                    secret: "${WEBHOOK_SECRET}"
+              - type: BitBucket
+                gitlab:
+                    secret: "${WEBHOOK_SECRET}"
+              - type: Generic
+                generic:
+                    secret: "${WEBHOOK_SECRET}"
+              - type: ConfigChange
+parameters:
+    - name: APP_NAME
+      displayName: Application Name
+      description: Application Name
+      required: true
+    - description: Git Url
+      displayName: URL of the Git Repo
+      name: GIT_URL
+      required: true
+    - description: Git Url
+      displayName: URL of the Git Repo
+      name: GIT_BRANCH
+      value: master
+      required: true
+    - description: Git Jenkins Credentials to use
+      displayName: Git Jenkins Credentials
+      name: JENKINS_GIT_SECRET
+      required: true
+    - description: Secret name to access the code
+      displayName: Secret name
+      name: GIT_SECRET
+      required: true
+    - description: Build Project Name
+      displayName: Build Project
+      name: BUILD_PROJECT
+      required: true
+    - description: Base Image to use
+      displayName: Base Image
+      name: BASE_IMAGE
+      required: true
+    - description: Build Tag name
+      displayName: Build Tag
+      name: BUILD_TAG
+      required: true
+    - description: Deploy Tag to use
+      displayName: Deploy Tag
+      name: DEPLOY_TAG
+      required: true
+    - description: Production Project Name
+      displayName: Production Project
+      name: PROD_PROJECT
+      required: false
+    - description: "Integration Test Strategy (Comma-separated values: maven,postman,jmeter)"
+      displayName: Integration Test Strategy
+      name: TEST_STRATEGY
+      required: false
+    - name: SA
+      description: "Service Account to use in the DC"
+      displayName: Service Account
+      value: "default"
+      required: true
+    - name: WEBHOOK_SECRET
+      displayName: Webhook Secret
+      description: A secret string used to configure the webhook.
+      generate: expression
+      from: "[a-zA-Z0-9]{40}"
