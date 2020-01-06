@@ -1,4 +1,4 @@
-node("jenkins-slave-npm") {
+node("ose-jenkins-agent-nodejs") {
 
     echo "Executing CI for application ${pipelineParameters.appName}: Git server (${pipelineParameters.gitUrl}) and branch (${pipelineParameters.gitBranch})"
 
