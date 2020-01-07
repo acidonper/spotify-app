@@ -65,7 +65,7 @@ node("nodejs") {
 
     stage("Clone application environment variables") {
         sh "git config --global credential.helper 'cache --timeout 7200'"
-        git branch: master, credentialsId: GIT_CREDS_ENVS, url: GIT_URL_ENVS
+        git branch: "master", credentialsId: GIT_CREDS_ENVS, url: GIT_URL_ENVS
     }
 
     stage("Openshift deploy in ${BUILD_PROJECT}") {
