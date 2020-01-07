@@ -79,6 +79,9 @@ node("nodejs") {
                 echo "Creating configmap from envs"
                 apply = openshift.apply(openshift.raw("create configmap ${APP_NAME} --dry-run --from-file=./spotify-app-exercise-envs/${DEPLOY_TAG}/envs --output=yaml").actions[0].out)
                 
+                echo "Creating secret from envs"
+                apply = openshift.apply(openshift.raw("create secret generic ${APP_NAME} --dry-run --from-file=./spotify-app-exercise-envs/${DEPLOY_TAG}/envs --output=yaml").actions[0].out)
+
                 echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${DEPLOY_TAG}"
                 openshift.tag("${BUILD_PROJECT}/${APP_NAME}:${BUILD_TAG}", "${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}")
                 
@@ -86,7 +89,7 @@ node("nodejs") {
 
                 if (!dc.exists()) {
                     echo "####################### Creating deployment for application ${APP_NAME} #######################\n"
-                    openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}").narrow('svc').expose()
+                    openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}", "--source-secret=${APP_NAME}").narrow('svc').expose()
                     openshift.set("triggers", "dc/${APP_NAME}", "--from-config", "--remove")
                     openshift.set("triggers", "dc/${APP_NAME}", "--manual")
                     openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/")
