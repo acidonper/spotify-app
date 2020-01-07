@@ -1,11 +1,11 @@
 node("nodejs") {
 
-    echo "Executing CI for application ${pipelineParameters.appName}: Git server (${pipelineParameters.gitUrl}) and branch (${pipelineParameters.gitBranch})"
+    echo "Executing CI for application ${APP_NAME}: Git server (${GIT_URL}) and branch (${GIT_BRANCH})"
 
     stage("Clone application sources") {
         sh "git config --global credential.helper 'cache --timeout 7200'"
-        // git branch: pipelineParameters.gitBranch, credentialsId: pipelineParameters.gitCredentials, url: pipelineParameters.gitUrl
-        git branch: pipelineParameters.gitBranch, url: pipelineParameters.gitUrl
+        // git branch: GIT_BRANCH, credentialsId: pipelineParameters.gitCredentials, url: GIT_URL
+        git branch: GIT_BRANCH, url: GIT_URL
 
     }
 
@@ -14,7 +14,7 @@ node("nodejs") {
 
             // sh 'npm run build:live' 
 
-            if (pipelineParameters.buildProject) {
+            if (BUILD_PROJECT) {
                 // in case we had a build project, it means we need to save the target
                 sh 'mkdir target; tar --exclude=".git" --exclude="./node_modules" -cvf target/archive.tar ./ || [[ $? -eq 1 ]]'
                 //sh 'rsync -av . target --exclude=node_modules --exclude=.git || [[ $? -eq 1 ]]'
@@ -35,61 +35,61 @@ node("nodejs") {
         // }
     }   
 
-    echo "Executing Openshift CD for application ${pipelineParameters.appName}"
+    echo "Executing Openshift CD for application ${APP_NAME}"
 
-    stage("Openshift build in ${pipelineParameters.buildProject}") {
+    stage("Openshift build in ${BUILD_PROJECT}") {
 
         openshift.withCluster() {
 
-            openshift.withProject(pipelineParameters.buildProject) {
-                if (!openshift.selector( "bc/${pipelineParameters.appName}").exists()) {
-                    echo "Creating build for application ${pipelineParameters.appName}"
-                    openshift.newBuild("--name=${pipelineParameters.appName}", "--image-stream=${pipelineParameters.baseImage}", "--binary", "--to=${pipelineParameters.appName}:${pipelineParameters.buildTag}")
+            openshift.withProject(BUILD_PROJECT) {
+                if (!openshift.selector( "bc/${APP_NAME}").exists()) {
+                    echo "Creating build for application ${APP_NAME}"
+                    openshift.newBuild("--name=${APP_NAME}", "--image-stream=${BASE_IMAGE}", "--binary", "--to=${APP_NAME}:${BUILD_TAG}")
                 }
 
-                if (pipelineParameters.baseImage.contains('nodejs') || pipelineParameters.baseImage.contains('nginx')) {
+                if (BASE_IMAGE.contains('nodejs') || BASE_IMAGE.contains('nginx')) {
                     echo "Building from archive"
 
                         unstash name: "app-binary"
                         
                         openshift.withCluster() {
-                            openshift.withProject(pipelineParameters.buildProject) {
-                                openshift.selector("bc", pipelineParameters.appName).startBuild("--from-archive=target/archive.tar", "--wait")
+                            openshift.withProject(BUILD_PROJECT) {
+                                openshift.selector("bc", APP_NAME).startBuild("--from-archive=target/archive.tar", "--wait")
                             }
                         }
                 }
 
-                echo "Tag image ${pipelineParameters.appName}:${pipelineParameters.buildTag} as ${pipelineParameters.appName}:${version}"
+                echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${version}"
 
-                openshift.tag("${pipelineParameters.buildProject}/${pipelineParameters.appName}:${pipelineParameters.buildTag}", "${pipelineParameters.buildProject}/${pipelineParameters.appName}:${version}")
+                openshift.tag("${BUILD_PROJECT}/${APP_NAME}:${BUILD_TAG}", "${BUILD_PROJECT}/${APP_NAME}:${version}")
 
             }
         }
     }
 
-    stage("Openshift deploy in ${pipelineParameters.buildProject}") {
+    stage("Openshift deploy in ${BUILD_PROJECT}") {
 
         openshift.withCluster() {
-            openshift.withProject(pipelineParameters.buildProject) {
+            openshift.withProject(BUILD_PROJECT) {
                 
-                echo "Tag image ${pipelineParameters.appName}:${pipelineParameters.buildTag} as ${pipelineParameters.appName}:${pipelineParameters.deployTag}"
+                echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${DEPLOY_TAG}"
                 
-                openshift.tag("${pipelineParameters.buildProject}/${pipelineParameters.appName}:${pipelineParameters.buildTag}", "${pipelineParameters.buildProject}/${pipelineParameters.appName}:${pipelineParameters.deployTag}")
+                openshift.tag("${BUILD_PROJECT}/${APP_NAME}:${BUILD_TAG}", "${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}")
                 
-                def dc = openshift.selector( "dc/${pipelineParameters.appName}")
+                def dc = openshift.selector( "dc/${APP_NAME}")
                 
                 if (!dc.exists()) {
-                    echo "####################### Creating deployment for application ${pipelineParameters.appName} #######################\n"
-                    openshift.newApp("--image-stream=${pipelineParameters.buildProject}/${pipelineParameters.appName}:${pipelineParameters.deployTag}","--name=${pipelineParameters.appName}").narrow('svc').expose()
-                    openshift.set("triggers", "dc/${pipelineParameters.appName}", "--from-config", "--remove")
-                    openshift.set("triggers", "dc/${pipelineParameters.appName}", "--manual")
+                    echo "####################### Creating deployment for application ${APP_NAME} #######################\n"
+                    openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}").narrow('svc').expose()
+                    openshift.set("triggers", "dc/${APP_NAME}", "--from-config", "--remove")
+                    openshift.set("triggers", "dc/${APP_NAME}", "--manual")
                     
-                    if (pipelineParameters.baseImage.contains('nginx')) {
-                    openshift.set("probe", "dc/${pipelineParameters.appName}", "--liveness", "--get-url=http://:8080/index.html")
-                    openshift.set("probe", "dc/${pipelineParameters.appName}", "--readiness", "--get-url=http://:8080/index.html")
+                    if (BASE_IMAGE.contains('nginx')) {
+                    openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/index.html")
+                    openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/index.html")
                     } else {
-                    openshift.set("probe", "dc/${pipelineParameters.appName}", "--liveness", "--get-url=http://:8080/actuator/info")
-                    openshift.set("probe", "dc/${pipelineParameters.appName}", "--readiness", "--get-url=http://:8080/actuator/health")
+                    openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/actuator/info")
+                    openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/actuator/health")
                     }
 
                 } else {
@@ -100,16 +100,16 @@ node("nodejs") {
                 // Wait for the DC to be deployed 
                 dc.rollout().status()
                 
-                dc = openshift.selector( "dc/${pipelineParameters.appName}")
+                dc = openshift.selector( "dc/${APP_NAME}")
 
                 def deployment = dc.object()
                 
                 echo "####################### Setting version ${version} in Deployment #######################\n ${deployment}"
                 deployment.metadata.labels['current-version'] = version
                 // Change the DC SA if needed.
-                if (pipelineParameters.sa != "default"){
-                    echo "####################### Changing DC SA ${pipelineParameters.sa} #######################\n ${deployment}"
-                    deployment.spec.template.spec.serviceAccountName = pipelineParameters.sa
+                if (SA != "default"){
+                    echo "####################### Changing DC SA ${SA} #######################\n ${deployment}"
+                    deployment.spec.template.spec.serviceAccountName = SA
                 }
                 openshift.apply(deployment)
 
@@ -119,7 +119,7 @@ node("nodejs") {
 
                 echo "####################### Application deployment has been rolled out #######################\n"
                 def dcObj = dc.object()
-                def podSelector = openshift.selector('pod', [deployment: "${pipelineParameters.appName}-${dcObj.status.latestVersion}"])
+                def podSelector = openshift.selector('pod', [deployment: "${APP_NAME}-${dcObj.status.latestVersion}"])
                 podSelector.untilEach {
                     echo "VERIFY pod: ${it.name()}"
                     return it.object().status.containerStatuses[0].ready
