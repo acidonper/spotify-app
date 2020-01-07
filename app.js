@@ -3,7 +3,7 @@ require("dotenv").config();
 const Express = require("express");
 const app = Express();
 const bodyParser = require("body-parser");
-const SERVER_PORT = process.env.SERVER_PORT || 5000;
+const SERVER_PORT = process.env.SPOTIFY_NODEJS_SERVICE_PORT || 5000;
 
 const mongoose = require("mongoose");
 const DB_PORT = process.env.MONGO_PORT;
