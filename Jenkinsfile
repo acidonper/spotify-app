@@ -4,7 +4,7 @@ node("nodejs") {
 
     stage("Clone application sources") {
         sh "git config --global credential.helper 'cache --timeout 7200'"
-        // git branch: GIT_BRANCH, credentialsId: pipelineParameters.gitCredentials, url: GIT_URL
+        // git branch: GIT_BRANCH, credentialsId: GIT_CREDENTIALS, url: GIT_URL
         git branch: GIT_BRANCH, url: GIT_URL
 
     }
