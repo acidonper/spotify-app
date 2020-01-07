@@ -80,8 +80,8 @@ node("nodejs") {
                     openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}").narrow('svc').expose()
                     openshift.set("triggers", "dc/${APP_NAME}", "--from-config", "--remove")
                     openshift.set("triggers", "dc/${APP_NAME}", "--manual")
-                    openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:5000/")
-                    openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:5000/health")
+                    openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/")
+                    openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/health")
                 } else {
                     echo "####################### DC exists, rolling out latest version of Deployment #######################\n"
                     dc.rollout().latest()

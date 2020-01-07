@@ -49,6 +49,18 @@ objects:
                         value: ${SA}
                       - name: TEST_STRATEGY
                         value: ${TEST_STRATEGY}
+                      - name: MONGO_PORT
+                        value: ${MONGO_PORT}
+                      - name: MONGO_HOST
+                        value: ${MONGO_HOST}
+                      - name: MONGO_DB
+                        value: ${MONGO_PORT}
+                      - name: SPOTIFY_ID
+                        value: ${SPOTIFY_ID}
+                      - name: SPOTIFY_SECRET
+                        value: ${SPOTIFY_ID}
+                      - name: SERVER_PORT
+                        value: ${SERVER_PORT}
                   jenkinsfilePath: Jenkinsfile
               type: JenkinsPipeline
           triggers:
@@ -121,3 +133,27 @@ parameters:
       description: A secret string used to configure the webhook.
       generate: expression
       from: "[a-zA-Z0-9]{40}"
+    - name: MONGO_PORT
+      description: "MONGO_PORT"
+      displayName: MONGO_PORT
+      value: "27017"
+    - name: MONGO_HOST
+      description: "MONGO_HOST"
+      displayName: MONGO_HOST
+      value: "spotify:spotify@mongodb"
+    - name: MONGO_DB
+      description: "MONGO_DB"
+      displayName: MONGO_DB
+      value: "mongo_nodejs"
+    - name: SPOTIFY_ID
+      description: "SPOTIFY_ID"
+      displayName: SPOTIFY_ID
+      required: true
+    - name: SPOTIFY_SECRET
+      description: "SPOTIFY_SECRET"
+      displayName: SPOTIFY_SECRET
+      required: true
+    - name: SERVER_PORT
+      description: "SERVER_PORT"
+      displayName: SERVER_PORT
+      value: "8080"
