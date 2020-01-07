@@ -80,15 +80,8 @@ node("nodejs") {
                     openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}").narrow('svc').expose()
                     openshift.set("triggers", "dc/${APP_NAME}", "--from-config", "--remove")
                     openshift.set("triggers", "dc/${APP_NAME}", "--manual")
-                    
-                    if (BASE_IMAGE.contains('nginx')) {
-                    openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/index.html")
-                    openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/index.html")
-                    } else {
-                    openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/actuator/info")
-                    openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/actuator/health")
-                    }
-
+                    openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:5000/")
+                    openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:5000/health")
                 } else {
                     echo "####################### DC exists, rolling out latest version of Deployment #######################\n"
                     dc.rollout().latest()
@@ -103,11 +96,13 @@ node("nodejs") {
                 
                 echo "####################### Setting version ${version} in Deployment #######################\n ${deployment}"
                 deployment.metadata.labels['current-version'] = version
+                
                 // Change the DC SA if needed.
                 if (SA != "default"){
                     echo "####################### Changing DC SA ${SA} #######################\n ${deployment}"
                     deployment.spec.template.spec.serviceAccountName = SA
                 }
+                
                 openshift.apply(deployment)
 
                 echo "####################### Rolling out latest version of Deployment #######################\n ${deployment}"
