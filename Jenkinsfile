@@ -64,8 +64,11 @@ node("nodejs") {
     echo "Cloning environment variables from a private repository"
 
     stage("Clone application environment variables") {
-        sh "git config --global credential.helper 'cache --timeout 7200'"
-        git branch: "master", credentialsId: GIT_CREDS_ENVS, url: GIT_URL_ENVS
+
+        dir('spotify-app-exercise-envs'){
+            git branch: "master", credentialsId: GIT_CREDS_ENVS, url: GIT_URL_ENVS
+        }
+
     }
 
     stage("Openshift deploy in ${BUILD_PROJECT}") {
