@@ -94,7 +94,7 @@ node("nodejs") {
                     openshift.set("triggers", "dc/${APP_NAME}", "--manual")
                     openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/")
                     openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/health")
-                    openshift.set("env", "secret/${APP_NAME}", "dc/${APP_NAME}")
+                    openshift.set("env", "--from=secret/${APP_NAME}", "dc/${APP_NAME}")
                 } else {
                     echo "####################### DC exists, rolling out latest version of Deployment #######################\n"
                     dc.rollout().latest()
