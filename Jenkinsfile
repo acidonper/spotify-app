@@ -49,21 +49,15 @@ node("nodejs") {
 
                 if (BASE_IMAGE.contains('nodejs') || BASE_IMAGE.contains('nginx')) {
                     echo "Building from archive"
-
                         unstash name: "app-binary"
-                        
-                        openshift.withCluster() {
-                            openshift.withProject(BUILD_PROJECT) {
-                                openshift.selector("bc", APP_NAME).startBuild("--from-archive=target/archive.tar", "--wait")
-                            }
-                        }
+                        openshift.selector("bc", APP_NAME).startBuild("--from-archive=target/archive.tar", "--wait")
                 }
 
                 echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${version}"
 
                 openshift.tag("${BUILD_PROJECT}/${APP_NAME}:${BUILD_TAG}", "${BUILD_PROJECT}/${APP_NAME}:${version}")
 
-            }
+            }   
         }
     }
 
