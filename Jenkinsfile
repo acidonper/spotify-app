@@ -89,11 +89,12 @@ node("nodejs") {
 
                 if (!dc.exists()) {
                     echo "####################### Creating deployment for application ${APP_NAME} #######################\n"
-                    openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}", "--source-secret=${APP_NAME}").narrow('svc').expose()
+                    openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}").narrow('svc').expose()
                     openshift.set("triggers", "dc/${APP_NAME}", "--from-config", "--remove")
                     openshift.set("triggers", "dc/${APP_NAME}", "--manual")
                     openshift.set("probe", "dc/${APP_NAME}", "--liveness", "--get-url=http://:8080/")
                     openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/health")
+                    openshift.set("env", "--from=secret/${APP_NAME}", "dc/${APP_NAME}")
                 } else {
                     echo "####################### DC exists, rolling out latest version of Deployment #######################\n"
                     dc.rollout().latest()
