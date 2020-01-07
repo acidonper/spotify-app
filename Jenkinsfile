@@ -49,12 +49,15 @@ node("nodejs") {
 
                 if (BASE_IMAGE.contains('nodejs') || BASE_IMAGE.contains('nginx')) {
                     echo "Building from archive"
-                        unstash name: "app-binary"
-                        openshift.selector("bc", APP_NAME).startBuild("--from-archive=target/archive.tar", "--wait")
+                    unstash name: "app-binary"
+                    openshift.selector("bc", APP_NAME).startBuild("--from-archive=target/archive.tar", "--wait")
                 }
 
-                echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${version}"
+                def pkg = readJSON file: 'package.json'
+                def version = pkg.version
+                def versionRelease = version+"-${BUILD_NUMBER}"
 
+                echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${version}"
                 openshift.tag("${BUILD_PROJECT}/${APP_NAME}:${BUILD_TAG}", "${BUILD_PROJECT}/${APP_NAME}:${version}")
 
             }   
