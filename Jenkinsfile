@@ -4,14 +4,11 @@ node("nodejs") {
 
     stage("Clone application sources") {
         sh "git config --global credential.helper 'cache --timeout 7200'"
-        // git branch: GIT_BRANCH, credentialsId: GIT_CREDENTIALS, url: GIT_URL
         git branch: GIT_BRANCH, url: GIT_URL
-
     }
 
     stage("Build the Project") {
             sh 'npm install'
-
             // sh 'npm run build:live' 
 
             if (BUILD_PROJECT) {
@@ -33,7 +30,7 @@ node("nodejs") {
         // withSonarQubeEnv('sonar') {
         //     sh "${scannerHome}/bin/sonar-runner"
         // }
-    }   
+    } 
 
     echo "Executing Openshift CD for application ${APP_NAME}"
 
@@ -64,17 +61,26 @@ node("nodejs") {
         }
     }
 
+    echo "Cloning environment variables from a private repository"
+
+    stage("Clone application environment variables") {
+        sh "git config --global credential.helper 'cache --timeout 7200'"
+        git branch: master, credentialsId: GIT_CREDS_ENVS, url: GIT_URL_ENVS
+    }
+
     stage("Openshift deploy in ${BUILD_PROJECT}") {
 
         openshift.withCluster() {
             openshift.withProject(BUILD_PROJECT) {
+
+                echo "Creating configmap from envs"
+                apply = openshift.apply(openshift.raw("create configmap ${APP_NAME} --dry-run --from-file=./spotify-app-exercise-envs/${DEPLOY_TAG}/envs --output=yaml").actions[0].out)
                 
                 echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${DEPLOY_TAG}"
-                
                 openshift.tag("${BUILD_PROJECT}/${APP_NAME}:${BUILD_TAG}", "${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}")
                 
                 def dc = openshift.selector( "dc/${APP_NAME}")
-                
+
                 if (!dc.exists()) {
                     echo "####################### Creating deployment for application ${APP_NAME} #######################\n"
                     openshift.newApp("--image-stream=${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}","--name=${APP_NAME}").narrow('svc').expose()

@@ -3,11 +3,11 @@ oc process -f pipeline.yaml \
     -p GIT_BRANCH=develop \
     -p GIT_URL=https://github.com/acidonper/spotify-app-exercice.git \
     -p GIT_SECRET=jenkins-git-password \
-    -p JENKINS_GIT_SECRET=secret \
+    -p GIT_CREDS_ENVS=jenkins-git-envs-password \
+    -p GIT_URL_ENVS=https://github.com/acidonper/spotify-app-exercise-envs.git \
     -p BUILD_PROJECT=test02 \
     -p BASE_IMAGE=nodejs:10 \
     -p BUILD_TAG=latest \
     -p DEPLOY_TAG=dev \
-    -p SPOTIFY_ID=fd3f0961ab664d788d7b14e381a01788 \
-    -p SPOTIFY_SECRET=1837c93d8d064720aefc40e1c522d4fd \
+    -p SA=default \
     -p TEST_STRATEGY=jmeter | oc apply -f - -n cicd
