@@ -93,7 +93,10 @@ node("nodejs") {
                 dc = openshift.selector( "dc/${APP_NAME}")
 
                 def deployment = dc.object()
-                
+                def pkg = readJSON file: 'package.json'
+                def version = pkg.version
+                def versionRelease = version+"-${BUILD_NUMBER}"
+
                 echo "####################### Setting version ${version} in Deployment #######################\n ${deployment}"
                 deployment.metadata.labels['current-version'] = version
                 
