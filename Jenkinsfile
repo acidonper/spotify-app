@@ -77,10 +77,10 @@ node("nodejs") {
             openshift.withProject(BUILD_PROJECT) {
 
                 echo "Creating configmap from envs"
-                apply = openshift.apply(openshift.raw("create configmap ${APP_NAME} --dry-run --from-env-file=./spotify-app-exercise-envs/${DEPLOY_TAG}/envs --output=yaml").actions[0].out)
+                apply = openshift.apply(openshift.raw("create configmap ${APP_NAME} --dry-run --from-env-file=./spotify-app-exercise-envs/${DEPLOY_TAG}/configmap --output=yaml").actions[0].out)
                 
                 echo "Creating secret from envs"
-                apply = openshift.apply(openshift.raw("create secret generic ${APP_NAME} --dry-run --from-env-file=./spotify-app-exercise-envs/${DEPLOY_TAG}/envs --output=yaml").actions[0].out)
+                apply = openshift.apply(openshift.raw("create secret generic ${APP_NAME} --dry-run --from-env-file=./spotify-app-exercise-envs/${DEPLOY_TAG}/secret --output=yaml").actions[0].out)
 
                 echo "Tag image ${APP_NAME}:${BUILD_TAG} as ${APP_NAME}:${DEPLOY_TAG}"
                 openshift.tag("${BUILD_PROJECT}/${APP_NAME}:${BUILD_TAG}", "${BUILD_PROJECT}/${APP_NAME}:${DEPLOY_TAG}")
@@ -96,6 +96,8 @@ node("nodejs") {
                     openshift.set("probe", "dc/${APP_NAME}", "--readiness", "--get-url=http://:8080/health")
                     echo "####################### Setting  secret/${APP_NAME} in dc/${APP_NAME} #######################\n"
                     openshift.set("env", "--from=secret/${APP_NAME}", "dc/${APP_NAME}")
+                    echo "####################### Setting  configmap/${APP_NAME} in dc/${APP_NAME} #######################\n"
+                    openshift.set("env", "--from=configmap/${APP_NAME}", "dc/${APP_NAME}")
                 } else {
                     echo "####################### DC exists, rolling out latest version of Deployment #######################\n"
                     dc.rollout().latest()
