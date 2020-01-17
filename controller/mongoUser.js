@@ -1,4 +1,5 @@
 const userModel = require("../models/user");
+const songModel = require("../models/song");
 const bcrypt = require("bcrypt");
 
 const newUser = async newUser => {
@@ -44,8 +45,71 @@ const checkUserPasswd = async (email, userpasswd) => {
     }
 };
 
+const searchFavoriteSongs = async searchSongsByEmail => {
+    try {
+        const userSearched = userModel
+            .find({ email: searchSongsByEmail })
+            .populate({
+                path: "favoriteSongs",
+                model: "SpotifySong",
+                select: "spotify_id name album"
+            });
+        const findAction = await userSearched.exec();
+        if (findAction.length === 0)
+            throw `User ${searchSongsByEmail} not found`;
+        if (findAction.length > 1)
+            throw `User ${searchSongsByEmail} duplicated`;
+        const songs = findAction[0].favoriteSongs;
+        return songs;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const addFavoriteSong = async (userEmail, songID) => {
+    try {
+        const addSong = await userModel
+            .findOneAndUpdate(
+                { email: userEmail },
+                { $addToSet: { favoriteSongs: songID } },
+                { new: true }
+            )
+            .populate({
+                path: "favoriteSongs",
+                model: "SpotifySong",
+                select: "name"
+            });
+        return `Added favorite song ${songID} to ${userEmail}`;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const deleteFavoriteSong = async (userEmail, songID) => {
+    try {
+        const deleteSong = userModel
+            .findOneAndUpdate(
+                { email: userEmail },
+                { $pull: { favoriteSongs: songID } },
+                { new: true }
+            )
+            .populate({
+                path: "favoriteSongs",
+                model: "SpotifySong",
+                select: "name"
+            });
+        await deleteSong.exec();
+        return `Deleted favorite song ${songID} from ${userEmail}`;
+    } catch (error) {
+        throw error;
+    }
+};
+
 module.exports = {
     newUser,
     searchUser,
-    checkUserPasswd
+    checkUserPasswd,
+    searchFavoriteSongs,
+    addFavoriteSong,
+    deleteFavoriteSong
 };

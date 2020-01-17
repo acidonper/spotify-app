@@ -1,11 +1,6 @@
-require("dotenv").config();
-
-const Express = require("express");
-const app = Express();
-const bodyParser = require("body-parser");
-const SERVER_PORT = process.env.SPOTIFY_NODEJS_SERVICE_PORT || 5000;
-
 const mongoose = require("mongoose");
+
+require("dotenv").config();
 const DB_PORT = process.env.MONGO_PORT;
 const DB_HOST = process.env.MONGO_HOST;
 const DB_NAME = process.env.MONGO_DB;
@@ -26,35 +21,55 @@ mongoose
         throw error;
     });
 
-const session = require("express-session");
-const MongoStore = require("connect-mongo")(session);
 const hbs = require("hbs");
+const Express = require("express");
+const app = Express();
 
-app.use(
-    session({
-        secret: "basic-auth",
-        resave: true,
-        saveUninitialized: true,
-        cookie: { secure: false },
-        store: new MongoStore({
-            mongooseConnection: mongoose.connection
-        })
-    })
-);
+// const bodyParser = require("body-parser");
+// const session = require("express-session");
+// const MongoStore = require("connect-mongo")(session);
+
+// app.use(
+//     session({
+//         secret: "basic-auth",
+//         resave: true,
+//         saveUninitialized: true,
+//         cookie: { secure: false },
+//         store: new MongoStore({
+//             mongooseConnection: mongoose.connection
+//         })
+//     })
+// );
+
+require("./passport/index")(app);
+app.use(Express.json());
+app.use(Express.urlencoded({ extended: false }));
 
 app.use(Express.static(__dirname + "/public"));
 app.set("views", __dirname + "/views");
 app.set("view engine", "hbs");
 hbs.registerPartials(__dirname + "/views/partials");
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.json());
+const isAutenticated = require("./middlewares/isAuthenticated");
+const auth = require("./controller/auth");
 
-app.use("/", require("./routes/app"));
-app.use("/security", require("./routes/security"));
-app.use("/spotify", require("./routes/spotify"));
+app.post("/login", auth.login);
+
+app.post("/ok", isAutenticated, (req, res, next) => {
+    console.log("venga");
+    res.json({ message: "Autorizado" });
+});
+
+// app.use("/", require("./routes/app"));
+// app.use("/security", require("./routes/security"));
+// app.use("/spotify", require("./routes/spotify"));
+// app.use("/users", require("./routes/users"));
 
 app.use((req, res) => res.status(404).json({ message: "route not found" }));
+
+const SERVER_PORT = process.env.SPOTIFY_NODEJS_SERVICE_PORT || 5000;
 
 app.listen(SERVER_PORT, () => {
     console.log(`Server listening on port ${SERVER_PORT} `);
