@@ -21,9 +21,10 @@ Basically, the procedure included in this document tries to perform the followin
 -   Create a service in order to allow access to nodejs container
 -   Create a route in order to allow access to previous service
 -   Create a deployment config object charged with the container creation and inject environment variables
+-   Start image build process
 -   Start deployment process
 
-**IMPORTANT: It is required to replace SPOTIFY_ID, SPOTIFY_SECRET and PROJECT_NAME variables with current values in oc-deploy-manually-app-dev.sh file**
+**IMPORTANT: It is required to replace SPOTIFY_ID, SPOTIFY_SECRET and PROJECT_NAME variables with current values in spotify_full_template.sh file**
 
 ## Procedure
 
@@ -31,8 +32,9 @@ In order to deploy this NodeJS project in OpenShift with all dependencies includ
 
 ```
 $ oc login -u user -p password https://openshift-console.example.com
-$ oc project test01
-$ sh ocp/oc-deploy-manually-app-dev.sh
+$ oc project projectexample01
+$ vi spotify_full_template.sh
+$ sh spotify_full_template.sh
 ```
 
 ## Test
@@ -42,13 +44,13 @@ Once the procedure execution is finished, it is possible to test Spotify App fol
 -   Manually testing pods deployment and other objects creation
 
 ```
-$ watch oc get all -n test01
+$ watch oc get all -n projectexample01
 ```
 
 -   Getting default Spotify App route
 
 ```
-$ oc get routes -n test01
+$ oc get routes -n projectexample01
 ```
 
 -   Access to the route obtained previously

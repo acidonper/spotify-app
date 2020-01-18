@@ -1,11 +1,6 @@
-require("dotenv").config();
-
-const Express = require("express");
-const app = Express();
-const bodyParser = require("body-parser");
-const SERVER_PORT = process.env.SPOTIFY_NODEJS_SERVICE_PORT || 5000;
-
 const mongoose = require("mongoose");
+
+require("dotenv").config();
 const DB_PORT = process.env.MONGO_PORT;
 const DB_HOST = process.env.MONGO_HOST;
 const DB_NAME = process.env.MONGO_DB;
@@ -26,9 +21,13 @@ mongoose
         throw error;
     });
 
+const hbs = require("hbs");
+const Express = require("express");
+const app = Express();
+
+const bodyParser = require("body-parser");
 const session = require("express-session");
 const MongoStore = require("connect-mongo")(session);
-const hbs = require("hbs");
 
 app.use(
     session({
@@ -53,8 +52,11 @@ app.use(bodyParser.json());
 app.use("/", require("./routes/app"));
 app.use("/security", require("./routes/security"));
 app.use("/spotify", require("./routes/spotify"));
+app.use("/users", require("./routes/users"));
 
 app.use((req, res) => res.status(404).json({ message: "route not found" }));
+
+const SERVER_PORT = process.env.SERVER_PORT || 5000;
 
 app.listen(SERVER_PORT, () => {
     console.log(`Server listening on port ${SERVER_PORT} `);
