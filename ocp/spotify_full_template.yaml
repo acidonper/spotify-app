@@ -1,0 +1,340 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: ${SERVICE_NAME} (NODEJS App + MongoDB)
+  name: ${SERVICE_NAME}
+  namespace: ${NAMESPACE}
+objects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      annotations:
+        template.openshift.io/expose-admin_password: "{.data['database-admin-password']}"
+        template.openshift.io/expose-database_name: "{.data['database-name']}"
+        template.openshift.io/expose-password: "{.data['database-password']}"
+        template.openshift.io/expose-username: "{.data['database-user']}"
+      name: ${DATABASE_SERVICE_NAME}
+    stringData:
+      database-admin-password: ${MONGODB_ADMIN_PASSWORD}
+      database-name: ${MONGODB_DATABASE}
+      database-password: ${MONGODB_PASSWORD}
+      database-user: ${MONGODB_USER}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: mongodb://{.spec.clusterIP}:{.spec.ports[?(.name=="mongo")].port}
+      name: ${DATABASE_SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      ports:
+      - name: mongo
+        nodePort: 0
+        port: 27017
+        protocol: TCP
+        targetPort: 27017
+      selector:
+        name: ${DATABASE_SERVICE_NAME}
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      name: ${DATABASE_SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      replicas: 1
+      selector:
+        name: ${DATABASE_SERVICE_NAME}
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            name: ${DATABASE_SERVICE_NAME}
+        spec:
+          containers:
+          - capabilities: {}
+            env:
+              - name: MONGODB_USER
+                valueFrom:
+                  secretKeyRef:
+                    key: database-user
+                    name: ${DATABASE_SERVICE_NAME}
+              - name: MONGODB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: database-password
+                    name: ${DATABASE_SERVICE_NAME}
+              - name: MONGODB_ADMIN_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: database-admin-password
+                    name: ${DATABASE_SERVICE_NAME}
+              - name: MONGODB_DATABASE
+                valueFrom:
+                  secretKeyRef:
+                    key: database-name
+                    name: ${DATABASE_SERVICE_NAME}
+            image: " "
+            imagePullPolicy: IfNotPresent
+            livenessProbe:
+              initialDelaySeconds: 30
+              tcpSocket:
+                port: 27017
+              timeoutSeconds: 1
+            name: mongodb
+            ports:
+              - containerPort: 27017
+                protocol: TCP
+            readinessProbe:
+              exec:
+                command:
+                  - /bin/sh
+                  - -i
+                  - -c
+                  - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
+                    --eval="quit()"
+              initialDelaySeconds: 3
+              timeoutSeconds: 1
+            resources:
+              limits:
+                memory: ${MEMORY_LIMIT}
+            securityContext:
+              capabilities: {}
+              privileged: false
+            terminationMessagePath: /dev/termination-log
+            volumeMounts:
+              - mountPath: /var/lib/mongodb/data
+                name: ${DATABASE_SERVICE_NAME}-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          volumes:
+          - emptyDir:
+              medium: ""
+            name: ${DATABASE_SERVICE_NAME}-data
+      triggers:
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - mongodb
+            from:
+              kind: ImageStreamTag
+              name: mongodb:${MONGODB_VERSION}
+              namespace: ${MONGO_IS_NAMESPACE}
+            lastTriggeredImage: ""
+          type: ImageChange
+        - type: ConfigChange
+    status: {}
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      annotations:
+        description: Keeps track of changes in the application image
+      name: ${SERVICE_NAME}
+      namespace: ${NAMESPACE}
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: ${SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      output:
+        to:
+          kind: ImageStreamTag
+          name: ${SERVICE_NAME}:latest
+      source:
+        contextDir: /
+        git:
+          ref: master
+          uri: ${SERVICE_GIT_URL}
+        type: Git
+      strategy:
+        sourceStrategy:
+          env:
+            - name: GIT_SSL_NO_VERIFY
+              value: "true"
+            - name: NODE_TLS_REJECT_UNAUTHORIZED
+              value: "0"
+          from:
+            kind: ImageStreamTag
+            name: nodejs:latest
+            namespace: openshift
+        type: Source
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      ports:
+      - name: ${SERVICE_NAME}-http
+        port: 5000
+        protocol: TCP
+        targetPort: 5000
+      selector:
+        deploymentconfig: ${SERVICE_NAME}
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      name: ${SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      to:
+        kind: Service
+        name: ${SERVICE_NAME}
+      port:
+        targetPort: ${SERVICE_NAME}-http
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+        wildcardPolicy: None
+    status: {}
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      name: ${SERVICE_NAME}
+    spec:
+      replicas: 1
+      selector:
+        deploymentconfig: ${SERVICE_NAME}
+      strategy:
+        resources: {}
+        rollingParams:
+          intervalSeconds: 1
+          maxSurge: 25%
+          maxUnavailable: 25%
+          timeoutSeconds: 600
+          updatePeriodSeconds: 1
+        type: Rolling
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            deploymentconfig: ${SERVICE_NAME}
+        spec:
+          containers:
+          - name: ${SERVICE_NAME}
+            image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/${SERVICE_NAME}
+            imagePullPolicy: Always
+            livenessProbe:
+              tcpSocket:
+                port: 5000
+              initialDelaySeconds: 15
+              timeoutSeconds: 1
+              periodSeconds: 10
+              successThreshold: 1
+              failureThreshold: 3
+            readinessProbe:
+              httpGet:
+                path: /health
+                port: 5000
+                scheme: HTTP
+              initialDelaySeconds: 15
+              timeoutSeconds: 10
+              periodSeconds: 30
+              successThreshold: 1
+              failureThreshold: 1
+            ports:
+              - containerPort: 5000
+                protocol: TCP
+            env:
+              - name: MONGO_PORT
+                value: "27017"
+              - name: MONGO_HOST
+                value: ${MONGODB_USER}:${MONGODB_PASSWORD}@${DATABASE_SERVICE_NAME}
+              - name: MONGO_DB
+                value: ${MONGODB_DATABASE}
+              - name: SPOTIFY_ID
+                value: ${SPOTIFY_ID}
+              - name: SPOTIFY_SECRET
+                value: ${SPOTIFY_SECRET}
+              - name: SPOTIFY_API
+                value: ${SPOTIFY_API}
+            resources:
+              limits:
+                memory: 1Gi
+            securityContext:
+              capabilities: {}
+              privileged: false
+            terminationMessagePath: /dev/termination-log
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+      triggers:
+        - type: ConfigChange
+    status: {}
+parameters:
+  - description: Maximum amount of memory the container can use.
+    displayName: Memory Limit
+    name: MEMORY_LIMIT
+    required: true
+    value: 512Mi
+  - description: The OpenShift Namespace where the ImageStream resides.
+    displayName: Namespace
+    name: NAMESPACE
+    required: true
+  - description: The OpenShift Namespace where the ImageStream resides.
+    displayName: Namespace
+    name: MONGO_IS_NAMESPACE
+    required: true
+    value: openshift
+  - description: The name of the OpenShift Service exposed for the database.
+    displayName: Database Service Name
+    name: DATABASE_SERVICE_NAME
+    required: true
+    value: mongodb
+  - description: Username for MongoDB user that will be used for accessing the database.
+    displayName: MongoDB Connection Username
+    from: user[A-Z0-9]{3}
+    generate: expression
+    name: MONGODB_USER
+    required: true
+  - description: Password for the MongoDB connection user.
+    displayName: MongoDB Connection Password
+    from: "[a-zA-Z0-9]{16}"
+    generate: expression
+    name: MONGODB_PASSWORD
+    required: true
+  - description: Name of the MongoDB database accessed.
+    displayName: MongoDB Database Name
+    name: MONGODB_DATABASE
+    required: true
+    value: sampledb
+  - description: Password for the database admin user.
+    displayName: MongoDB Admin Password
+    from: "[a-zA-Z0-9]{16}"
+    generate: expression
+    name: MONGODB_ADMIN_PASSWORD
+    required: true
+  - description: Version of MongoDB image to be used (3.6 or latest).
+    displayName: Version of MongoDB Image
+    name: MONGODB_VERSION
+    required: true
+    value: "3.6"
+  - description: Name of the service NODEJS
+    displayName: NODEJS Service Name
+    name: SERVICE_NAME
+  - description: Git repository where service is stored
+    displayName: GIT Service URL
+    name: SERVICE_GIT_URL
+  - description: Target SPOTIFY_ID
+    displayName: SPOTIFY_ID
+    name: SPOTIFY_ID
+  - description: Target SPOTIFY_SECRET
+    displayName: SPOTIFY_SECRET
+    name: SPOTIFY_SECRET
+  - description: Target SPOTIFY_API
+    displayName: SPOTIFY_API
+    name: SPOTIFY_API
+    value: https://api.spotify.com/v1/

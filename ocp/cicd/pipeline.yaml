@@ -31,10 +31,12 @@ objects:
                         value: ${APP_NAME}
                       - name: GIT_BRANCH
                         value: ${GIT_BRANCH}
-                      - name: GIT_CREDENTIALS
-                        value: ${JENKINS_GIT_SECRET}
                       - name: GIT_URL
                         value: ${GIT_URL}
+                      - name: GIT_CREDS_ENVS
+                        value: ${GIT_CREDS_ENVS}
+                      - name: GIT_URL_ENVS
+                        value: ${GIT_URL_ENVS}
                       - name: BUILD_PROJECT
                         value: ${BUILD_PROJECT}
                       - name: BASE_IMAGE
@@ -70,18 +72,22 @@ parameters:
       displayName: Application Name
       description: Application Name
       required: true
-    - description: Git Url
-      displayName: URL of the Git Repo
-      name: GIT_URL
+    - name: GIT_URL
+      description: Git Url Application
+      displayName: URL of the Application Git Repo
       required: true
-    - description: Git Url
-      displayName: URL of the Git Repo
-      name: GIT_BRANCH
+    - name: GIT_BRANCH
+      description: Git Url Application Branch
+      displayName: URL of the Git Branch Repo
       value: master
       required: true
-    - description: Git Jenkins Credentials to use
-      displayName: Git Jenkins Credentials
-      name: JENKINS_GIT_SECRET
+    - name: GIT_CREDS_ENVS
+      description: Envs Variables Repo Creds
+      displayName: Envs Variables Repo Creds
+      required: true
+    - name: GIT_URL_ENVS
+      description: Git Url Envs Variables
+      displayName: URL of the Git Envs Variables Repo
       required: true
     - description: Secret name to access the code
       displayName: Secret name

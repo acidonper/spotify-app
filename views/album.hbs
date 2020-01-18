@@ -41,9 +41,26 @@
                     </audio>
                 </figure>
                 <br><span class="badge badge-primary">{{track_number}}</span>
+                {{#if favorite}}
+                <iframe name="hiddenFrame" width="0" height="0" border="0" style="display: none;"></iframe>
+                <form action="/users/deletesong" method="POST" target="hiddenFrame">   
+                    <input type="hidden" id="spotify_id" name="spotify_id" value="{{id}}">
+                    <input type="hidden" id="name" name="name" value="{{name}}">
+                    <input type="hidden" id="album" name="album" value="{{../spotify_album}}">
+                    <button type="submit" class="btn btn-danger">Favorite</button>
+                {{else}}
+                <iframe name="hiddenFrameadd" width="0" height="0" border="0" style="display: none;"></iframe>
+                <form action="/users/addsong" method="POST" target="hiddenFrameadd">   
+                    <input type="hidden" id="spotify_id" name="spotify_id" value="{{id}}">
+                    <input type="hidden" id="name" name="name" value="{{name}}">
+                    <input type="hidden" id="album" name="album" value="{{../spotify_album}}">
+                    <button type="submit" class="btn btn-light">Favorite</button>
+                </form>
+                {{/if}}
             </div>
         </div>
-        {{/each}}
+        {{/each}}                         
+        {{favoritesongs}}
     {{else}}
     <h2 class="font-weight-light">Playlist Management System</h2> 
     <h4>@Powered by Asier Cidon</h4>

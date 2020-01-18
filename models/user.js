@@ -25,7 +25,8 @@ const userSchema = new Schema({
         type: String,
         required: [true, "email es is required"],
         unique: true
-    }
+    },
+    favoriteSongs: [{ type: Schema.Types.ObjectId, ref: "SpotifySong" }]
 });
 
 userSchema.plugin(uniqueValidator, { message: "{PATH} has to be uniq" });
