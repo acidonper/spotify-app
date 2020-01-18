@@ -56,7 +56,7 @@ app.use("/users", require("./routes/users"));
 
 app.use((req, res) => res.status(404).json({ message: "route not found" }));
 
-const SERVER_PORT = process.env.SPOTIFY_NODEJS_SERVICE_PORT || 5000;
+const SERVER_PORT = process.env.SERVER_PORT || 5000;
 
 app.listen(SERVER_PORT, () => {
     console.log(`Server listening on port ${SERVER_PORT} `);
