@@ -3,12 +3,22 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 const DB_PORT = process.env.MONGO_PORT;
 const DB_HOST = process.env.MONGO_HOST;
-const DB_NAME = process.env.MONGO_DB;
+const DB_NAME = process.env.MONGODB_DATABASE;
+const DB_USER = process.env.MONGODB_USER;
+const DB_PASS = process.env.MONGODB_PASSWORD;
 
-console.log(`mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`);
+let DB_CON;
+
+if (DB_USER !== undefined) {
+    DB_CON = `mongodb://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+} else {
+    DB_CON = `mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`;
+}
+
+console.log(DB_CON);
 
 mongoose
-    .connect(`mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
+    .connect(DB_CON, {
         useNewUrlParser: true,
         useUnifiedTopology: true
     })
