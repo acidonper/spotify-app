@@ -23,9 +23,7 @@ mongoose
         useUnifiedTopology: true
     })
     .then(result => {
-        console.log(
-            `Connection to mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME} established`
-        );
+        console.log(`Connection to ${DB_CON} established`);
     })
     .catch(error => {
         throw error;
